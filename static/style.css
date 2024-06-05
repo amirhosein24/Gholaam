@@ -1,0 +1,24 @@
+body {
+    font-family: Arial, sans-serif;
+}
+
+h1 {
+    text-align: center;
+}
+
+form {
+    text-align: center;
+    margin: 20px;
+}
+
+.chatbox {
+    margin: 20px auto;
+    width: 60%;
+    border: 1px solid #ccc;
+    padding: 10px;
+    background-color: #f9f9f9;
+}
+
+.chatbox p {
+    margin: 5px 0;
+}
