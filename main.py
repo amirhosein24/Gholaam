@@ -1,4 +1,7 @@
 
+from credentials import creds
+from groqapi import llama
+
 import asyncio
 
 
@@ -10,6 +13,9 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
 
 app = FastAPI()
+
+llama = llama.Llama3(api_key=creds.GroqApiToken)
+
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -27,7 +33,7 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         while True:
             message = await websocket.receive_text()
-            response = await asyncio.to_thread(ask_llama, message)
+            response = await asyncio.to_thread(llama.ask_llama, message)
             await websocket.send_text(response)
     except WebSocketDisconnect:
         print("Client disconnected")
