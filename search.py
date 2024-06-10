@@ -1,5 +1,6 @@
 
 
+import json
 import concurrent.futures
 from credentials import creds
 from groqapi import llama
@@ -18,9 +19,10 @@ llama = llama.Llama3(api_key=creds.GroqApiToken)
 def start_search(search_text: str) -> str:
 
     global internet_content
-    internet_content = []
+    internet_content = {}
 
-    results = DDGS().text(search_text, max_results=2, safesearch='off', timelimit='y')
+    results = DDGS().text(search_text, max_results=3, safesearch='off', timelimit='y')
+    print(len(results))
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
         thread_list = []
@@ -45,8 +47,8 @@ def search_thread(id, link, title):
         fetch_data).replace("\n", " ").replace("  ", " ").replace("{", "").replace("{", "")
 
     plain_data = llama.ask_llama(f"title : {title}\ndata : {plain_data}",
-                                 system_prompt="rewrite the date without unrelevant data to the title, make sure to only remove the unrelevant data from the title", model="llama3-8b-8192")
-
+                                 system_prompt="rewrite the date without unrelevant data to the title, make sure to only remove the unrelevant data from the title", model="llama3-70b-8192")
+    print(id, link, plain_data)
     with Lock():
         internet_content[str(id)] = plain_data
 
@@ -58,24 +60,18 @@ functions = {
     "start_search": start_search
 }
 
-
 answer = llama.run_conversation(prompt)
 print(answer)
 
 if answer.tool_calls:
 
-
     for tool in answer.tool_calls:
-
-        data = functions[tool.function.name](tool.function.arguments)
-
-
-
-        
         print(tool.function.name)
         print(tool.function.arguments)
 
+        arg = json.loads(tool.function.arguments)
 
+        data = functions[tool.function.name](search_text=arg["search_text"])
 
         print(data)
 print("----------------------")

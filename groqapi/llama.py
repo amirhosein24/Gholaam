@@ -82,7 +82,7 @@ Always prioritize accuracy and relevance in the generated search queries."""
             {
                 "type": "function",
                 "function": {
-                    "name": "search_internet",
+                    "name": "start_search",
                     "description":  """this is a function that gets real time data from the internet, use this function when aditional data is needed""",
                     "parameters": {
                         "type": "object",
