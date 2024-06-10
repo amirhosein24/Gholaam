@@ -6,14 +6,14 @@ class Llama3:
     def __init__(self, api_key):
         self.client = Groq(api_key=api_key)
 
-    def ask_llama70(self, prompt, model="llama3-70b-8192") -> str:
+    def ask_llama(self, prompt: str, system_prompt: str = "you are a helpfull assistant", model: str = "llama3-70b-8192") -> str:
 
         chat_completion = self.client.chat.completions.create(
 
             messages=[
                 {
                     "role": "system",
-                    "content": "you are a helpfull assistant, dont say its based on sth or etc"
+                    "content": system_prompt
                 },
                 {
                     "role": "user",
@@ -24,26 +24,37 @@ class Llama3:
         )
         return chat_completion.choices[0].message.content
 
-    def ask_llama8(self, prompt, model="llama3-8b-8192") -> str:
+    def create_search_code(self, prompt: str, model="llama3-70b-8192") -> str:
+
         chat_completion = self.client.chat.completions.create(
-
-            messages=[
-                {
-                    "role": "user",
-                    "content": prompt,
-                }
-            ],
-            model=model,
-        )
-        return chat_completion.choices[0].message.content
-
-    def date_handler(self, prompt, model="llama3-8b-8192") -> str:
-        chat_completion = self.client.chat.completions.create(
-
             messages=[
                 {
                     "role": "system",
-                    "content": "do not answer the title from the user, only re-print the given data but remove the irrelevant data to title"  # , basicly you should shorten the text with out changing it (dont remove the important data)"
+                    "content": """You are a system that generates search queries optimized for DuckDuckGo. Your task is to convert user prompts into clear, concise, and highly relevant search queries that will yield the best search results. The output must be directly usable as search text in the DuckDuckGo search engine. Follow these guidelines:
+
+Understand the Core Intent: Extract the main idea or question from the user prompt.
+Use Keywords: Focus on the most important keywords and phrases related to the user's intent.
+Be Concise: Keep the search query brief and to the point, avoiding unnecessary words (for example dont explain the output or dont say search query:).
+Specificity: Add any relevant specifics or details to narrow down the search.
+No Additional Text: Ensure the output is only the search query text, without any additional explanations or characters, dont answer the input but only convert it to search query.
+
+Examples:
+User Prompt: Tell me about the latest advancements in AI technology.
+Search Query: latest advancements in AI technology
+
+User Prompt: What are the best Italian restaurants in New York City?
+Search Query: best Italian restaurants New York City
+
+User Prompt: How do I fix a leaking faucet?
+Search Query: how to fix leaking faucet guide
+
+User Prompt: Who won the Nobel Prize in Literature in 2023?
+Search Query: Nobel Prize in Literature 2023 winner
+
+User Prompt: What are some good strategies for investing in stocks?
+Search Query: good strategies for investing in stocks
+
+Always prioritize accuracy and relevance in the generated search queries."""
                 },
                 {
                     "role": "user",
@@ -54,19 +65,69 @@ class Llama3:
         )
         return chat_completion.choices[0].message.content
 
-    def create_search_code(self, prompt, model="llama3-70b-8192") -> str:
-        chat_completion = self.client.chat.completions.create(
+    def run_conversation(self, user_prompt):
 
-            messages=[
-                {
-                    "role": "system",
-                    "content": "dont asnwer the prompt, rewrite it in a simple way so it can be use in a search engine like duckduckgo, dont write any explanation or anything else"
+        messages = [
+            {
+                "role": "system",
+                "content": "you are a helpfull assisstant that can search the internet if more data is needed"
+            },
+            {
+                "role": "user",
+                "content": user_prompt,
+            }
+        ]
+        tools = [
+
+            {
+                "type": "function",
+                "function": {
+                    "name": "search_internet",
+                    "description":  """this is a function that gets real time data from the internet, use this function when aditional data is needed""",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "search_text": {
+                                "type": "string",
+                                "description": """a query that goes in the search engine to get more data
+
+Understand the Core Intent: Extract the main idea or question from the user prompt.
+Use Keywords: Focus on the most important keywords and phrases related to the user's intent.
+Be Concise: Keep the search query brief and to the point, avoiding unnecessary words (for example dont explain the output or dont say search query:).
+Specificity: Add any relevant specifics or details to narrow down the search.
+No Additional Text: Ensure the output is only the search query text, without any additional explanations or characters, dont answer the input but only convert it to search query.
+
+Examples:
+User Prompt: Tell me about the latest advancements in AI technology.
+Search Query: latest advancements in AI technology
+
+User Prompt: What are the best Italian restaurants in New York City?
+Search Query: best Italian restaurants New York City
+
+User Prompt: How do I fix a leaking faucet?
+Search Query: how to fix leaking faucet guide
+
+User Prompt: Who won the Nobel Prize in Literature in 2023?
+Search Query: Nobel Prize in Literature 2023 winner
+
+User Prompt: What are some good strategies for investing in stocks?
+Search Query: good strategies for investing in stocks
+
+Always prioritize accuracy and relevance in the generated search queries."""
+                            }
+                        },
+                        "required": ["search_text"],
+                    },
                 },
-                {
-                    "role": "user",
-                    "content": prompt,
-                }
-            ],
-            model=model,
+            }
+        ]
+
+        response = self.client.chat.completions.create(
+            model="llama3-70b-8192",
+            messages=messages,
+            tools=tools,
+            tool_choice="auto",
+            max_tokens=8192
         )
-        return chat_completion.choices[0].message.content
+
+        return response.choices[0].message

@@ -1,70 +1,81 @@
 
-from duckduckgo_search import DDGS
 
-from trafilatura import fetch_url, extract
-from threading import Thread, Lock
-
+import concurrent.futures
 from credentials import creds
 from groqapi import llama
+
+
+import trafilatura
+from duckduckgo_search import DDGS
+from threading import Lock
+
+
 llama = llama.Llama3(api_key=creds.GroqApiToken)
 
-prompt = "is halsy sick ?"
-
-search_prompt = llama.create_search_code(prompt)
-print(search_prompt)
-
-results = DDGS().text(search_prompt, max_results=4)
-print(len(results), "searchoooo")
-internet_content = dict()
+# internet_content = []
 
 
-def get_to_dict(numb, data):
+def start_search(search_text: str) -> str:
+
+    global internet_content
+    internet_content = []
+
+    results = DDGS().text(search_text, max_results=2, safesearch='off', timelimit='y')
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        thread_list = []
+
+        for id, result in enumerate(results):
+            try:
+                thread = executor.submit(
+                    search_thread, id, result["href"], search_text)
+                thread_list.append(thread)
+            except Exception as error:
+                print(
+                    f"error in start_thread, id:{id}, result:{result}, error:{error}")
+
+        concurrent.futures.wait(thread_list)
+
+    return internet_content
+
+
+def search_thread(id, link, title):
+    fetch_data = trafilatura.fetch_url(link)
+    plain_data = trafilatura.extract(
+        fetch_data).replace("\n", " ").replace("  ", " ").replace("{", "").replace("{", "")
+
+    plain_data = llama.ask_llama(f"title : {title}\ndata : {plain_data}",
+                                 system_prompt="rewrite the date without unrelevant data to the title, make sure to only remove the unrelevant data from the title", model="llama3-8b-8192")
+
     with Lock():
-        internet_content[str(numb)] = data
+        internet_content[str(id)] = plain_data
 
 
-def export_data(link__):
-    downloaded = fetch_url(link__)
-    result = extract(downloaded).replace("\n", " ").replace("  ", " ")
-    result = llama.date_handler(f"title : {prompt}\ndata : {result}")
-    return result
+prompt = "write me a short story on how hitler died?"
 
 
-threads = []
+functions = {
+    "start_search": start_search
+}
 
 
-def gogo(number, linker):
-    try:
-        newdata = export_data(linker)
-        get_to_dict(number, newdata)
-    except:
-        print("erorreddd")
-
-for num, link in enumerate(results):
-
-    thread = Thread(target=gogo, args=(num, link["href"], ))
-    threads.append(thread)
-    print(num, link["href"])
-    thread.start()
-
-
-for thread in threads:
-    print("wowwwwww")
-    thread.join()
-
-
-
-# print(internet_content)
-
-
-answer = llama.ask_llama70(f"title: {prompt}\ndata: {internet_content}")
-
-print("----------------------")
+answer = llama.run_conversation(prompt)
 print(answer)
 
+if answer.tool_calls:
+
+
+    for tool in answer.tool_calls:
+
+        data = functions[tool.function.name](tool.function.arguments)
 
 
 
+        
+        print(tool.function.name)
+        print(tool.function.arguments)
 
 
 
+        print(data)
+print("----------------------")
