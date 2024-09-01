@@ -162,4 +162,4 @@ cython_debug/
 
 # my own files
 aaaa/
-credentials/creds.json
+creds/creds.json

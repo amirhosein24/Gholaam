@@ -1,6 +1,6 @@
 
-from credentials import creds
-from groqapi import llama
+from creds import creds
+from ai import llama
 
 import asyncio
 
@@ -10,8 +10,6 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-
-
 
 
 app = FastAPI()

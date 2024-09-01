@@ -2,8 +2,8 @@
 
 import json
 import concurrent.futures
-from credentials import creds
-from groqapi import llama
+from creds import creds
+from ai import llama
 
 
 import trafilatura
