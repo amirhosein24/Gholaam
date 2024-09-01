@@ -161,5 +161,6 @@ cython_debug/
 
 
 # my own files
-aaaa/
 creds/creds.json
+/test
+/ui/node_modules
