@@ -5,15 +5,18 @@ from groq import Groq
 
 import creds
 
-client = Groq(api_key=creds.GroqApiToken)
+groq_client = Groq(api_key=creds.GroqApiToken)
 
 
-def generate_text(client, prompt: str, system_prompt: str = "you are a helpfull assistant", model: str = "llama-3.1-70b-versatile") -> str:
+def generate_text(prompt: str, system_prompt: str = "you are a helpfull assistant", model: str = "llama-3.1-70b-versatile") -> str:
     """
     use the groq api to generate text with prompt and system prompt
     """
+
+    global groq_client
+
     try:
-        chat_completion = client.chat.completions.create(
+        chat_completion = groq_client.chat.completions.create(
             messages=[
                 {
                     "role": "system",
@@ -33,20 +36,20 @@ def generate_text(client, prompt: str, system_prompt: str = "you are a helpfull 
         return False
 
 
-def transcribe(client, file_path: str) -> str:
+def transcribe(file_path: str, model: str = "whisper-large-v3") -> str:
     """
-    gets a audio file of max 25 mg and transcirbe it and then delets the file
+    gets an audio file of max 25 mg and transcirbe it and then delets the file
     """
 
+    global groq_client
     try:
         with open(file_path, "rb") as file:
-            transcription = client.audio.transcriptions.create(
+            transcription = groq_client.audio.transcriptions.create(
                 file=(file_path, file.read()),
-                model="whisper-large-v3",
+                model=model,
                 response_format="verbose_json",
             )
 
-            print(transcription.text)
             return transcription.text
 
     except Exception as error:

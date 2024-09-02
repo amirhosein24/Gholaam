@@ -1,16 +1,14 @@
 {
-    "name": "audio-recorder",
+    "name": "gholum",
     "version": "1.0.0",
-    "description": "Simple desktop app to record audio using Electron and FastAPI",
-    "main": "main.js",
+    "description": "gholum, a desktop ai",
+    "main": "gholum.js",
     "scripts": {
       "start": "electron ."
     },
     "devDependencies": {
       "electron": "^25.2.0"
     },
-    "dependencies": {
-      "axios": "^1.4.0"
-    }
+    "dependencies": {}
   }
   
